@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>CHAT-BOT</title>
+
+	<!-- for mobile screens -->
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<!-- stylesheets are conveniently separated into components -->
+	<link rel="stylesheet" media="all" href="../component/styles/setup.css">
+	<link rel="stylesheet" media="all" href="../component/styles/says.css">
+	<link rel="stylesheet" media="all" href="../component/styles/reply.css">
+	<link rel="stylesheet" media="all" href="../component/styles/typing.css">
+	<link rel="stylesheet" media="all" href="../component/styles/input.css">
+	<style>
+	body {
+		background: #dcdde0;
+	}
+	.bubble-container {
+		height: 100vh;
+	}
+	.bubble-container .input-wrap textarea {
+		margin: 0;
+		width: calc(100% - 30px);
+	}
+	</style>
+</head>
+<body>
+
+<!-- container element for chat window -->
+<div id="chat"></div>
+
+<!-- import the JavaScript file -->
+<script src="../component/Bubbles.js"></script>
+<script>
+// initialize by constructing a named function...
+// ...and add text processing plugin:
+var chatWindow = new Bubbles(document.getElementById("chat"), "chatWindow", {
+  // the one that we care about is inputCallbackFn()
+  // this function returns an object with some data that we can process from user input
+  // and understand the context of it
+
+  // this is an example function that matches the text user typed to one of the answer bubbles
+  // this function does no natural language processing
+  // this is where you may want to connect this script to NLC backend.
+  inputCallbackFn: function(o) {
+    // add error conversation block & recall it if no answer matched
+    var miss = function() {
+      chatWindow.talk(
+        {
+          "i-dont-get-it": {
+            says: [
+              "Sorry, I don't get it 😕. Pls repeat? Or you can just click below 👇"
+            ],
+            reply: o.convo[o.standingAnswer].reply
+          }
+        },
+        "i-dont-get-it"
+      )
+    }
+
+    // do this if answer found
+    var match = function(key) {
+      setTimeout(function() {
+        chatWindow.talk(convo, key) // restart current convo from point found in the answer
+      }, 600)
+    }
+
+    // sanitize text for search function
+    var strip = function(text) {
+      return text.toLowerCase().replace(/[\s.,\/#!$%\^&\*;:{}=\-_'"`~()]/g, "")
+    }
+
+    // search function
+    var found = false
+    o.convo[o.standingAnswer].reply.forEach(function(e, i) {
+      strip(e.question).includes(strip(o.input)) && o.input.length > 0
+        ? (found = e.answer)
+        : found ? null : (found = false)
+    })
+    found ? match(found) : miss()
+  }
+}) // done setting up chat-bubble
+
+// conversation object defined separately, but just the same as in the
+// "Basic chat-bubble Example" (1-basics.html)
+var convo = {
+  ice: {
+    says: ["Hi", "How may I help you? Show Products or Show contact details?"],
+    reply: [
+      {
+        question: "Show Products",
+        answer: "banana"
+      },
+      {
+        question: "Show contact details",
+        answer: "ice-cream"
+      }
+    ]
+  },
+  banana: {
+    says: ["Danone Yogurt 60 INR for 0.5l", "Milk 22 INR per 500ml", "Cheese 150 INR per kg", "Butter 50 INR per 200g", 
+    "Watermelon 16 INR per kg", "Dates 3000 INR per kg", "Almonds 975 INR per kg", "Dried Cranberry 1000 INR per kg", 
+    "The Afghan raisins 500 INR per kg", "Chile Masala 285 INR per kg.", "Pasta 250 INR per 500g", "Coca-Cola 75 INR per 1.75l",
+     "Green tea bags 1,9 USD = 140 INR per 25 packages", "White bread 70 700 INR", "Fresh tortillas22 INR for 4 pcs. medium size", 
+     "Nutella 3,4 USD = 250 INR per 350 grams"],
+    reply: [
+      {
+        question: "Start Over",
+        answer: "ice"
+      }
+    ]
+  },
+  "ice-cream": {
+    says: ["Phone number : 9324481518", "Email ID : help@shoppingcart.com"],
+    reply: [
+      {
+        question: "Start Over",
+        answer: "ice"
+      }
+    ]
+  }
+}
+
+// pass JSON to your function and you're done!
+chatWindow.talk(convo)
+</script>
+</body>
